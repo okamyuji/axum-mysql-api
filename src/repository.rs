@@ -67,7 +67,7 @@ impl Entries for EntryRepository {
             .execute(&mut *transaction)
             .await?;
         let id = result.last_insert_id() as i64;
-        let mut entry_ids = Vec::with_capacity(journal.entries.len());
+        let mut entry_ids = Vec::new();
         for entry in journal.entries {
             let result = sqlx::query("INSERT INTO journal_entries (journal_id, account_code, amount_cents, description) VALUES (?, ?, ?, ?)")
                 .bind(id)

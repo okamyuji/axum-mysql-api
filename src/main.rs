@@ -147,6 +147,13 @@ mod tests {
             Err(crate::service::CreateError::Invalid)
         ));
 
+        let mut too_many = sample.clone();
+        too_many.entries.resize(101, too_many.entries[0].clone());
+        assert!(matches!(
+            service.create_journal(too_many).await,
+            Err(crate::service::CreateError::Invalid)
+        ));
+
         let mut valid_boundary = sample;
         valid_boundary.entries[0].account_code = "a".repeat(20);
         valid_boundary.entries[0].description = "a".repeat(255);

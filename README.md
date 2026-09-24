@@ -13,7 +13,7 @@ DATABASE_URL=mysql://accounting:accounting@127.0.0.1:3306/accounting cargo run
 APIルートは `Authorization: Bearer <API_KEY>` を要求します。
 
 - `GET /entries/{id}`: 仕訳行を取得（見つからない場合404）
-- `POST /journals`: 貸借一致する2行以上の仕訳をトランザクションで保存（201）、不正入力は422
+- `POST /journals`: 貸借一致する2〜100行の仕訳をトランザクションで保存（201）、不正入力は422
 - `/swagger-ui/`: Bearer認証を設定できるSwagger UI
 - `/api-docs/openapi.json`: OpenAPI仕様
 

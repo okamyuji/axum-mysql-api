@@ -19,7 +19,7 @@ impl<R: Entries> EntryService<R> {
     }
 
     pub async fn create_journal(&self, journal: NewJournal) -> Result<CreatedJournal, CreateError> {
-        if journal.entries.len() < 2 {
+        if !(2..=100).contains(&journal.entries.len()) {
             return Err(CreateError::Invalid);
         }
         let mut balance = 0_i128;
