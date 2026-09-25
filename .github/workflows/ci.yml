@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   pull_request:
+permissions:
+  contents: read
 jobs:
   ci:
     uses: okamyuji/reusable-workflows/.github/workflows/rust-ci.yml@v1
