@@ -5,7 +5,7 @@ on:
   pull_request:
 jobs:
   ci:
-    uses: okamyuji/reusable-workflows/.github/workflows/rust-ci.yml@826b4bfbd58f71832c48f5865e97e4814e14b390
+    uses: okamyuji/reusable-workflows/.github/workflows/rust-ci.yml@v1
   security:
     permissions:
       contents: read
