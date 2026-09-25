@@ -1,4 +1,4 @@
-use crate::repository::{CreatedJournal, Entries, Entry, NewJournal};
+use crate::domain::{CreatedJournal, Entries, Entry, NewJournal};
 
 #[derive(Clone)]
 pub struct EntryService<R: Entries>(R);
@@ -19,21 +19,7 @@ impl<R: Entries> EntryService<R> {
     }
 
     pub async fn create_journal(&self, journal: NewJournal) -> Result<CreatedJournal, CreateError> {
-        if !(2..=100).contains(&journal.entries.len()) {
-            return Err(CreateError::Invalid);
-        }
-        let mut balance = 0_i128;
-        for entry in &journal.entries {
-            if entry.account_code.is_empty()
-                || entry.account_code.chars().count() > 20
-                || entry.description.chars().count() > 255
-                || entry.amount_cents == 0
-            {
-                return Err(CreateError::Invalid);
-            }
-            balance += i128::from(entry.amount_cents);
-        }
-        if balance != 0 {
+        if !journal.is_valid() {
             return Err(CreateError::Invalid);
         }
         self.0
