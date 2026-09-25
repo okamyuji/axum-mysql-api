@@ -1,4 +1,5 @@
 mod auth;
+mod domain;
 mod handler;
 mod repository;
 mod service;
@@ -7,18 +8,16 @@ use axum::{middleware, Router};
 use repository::EntryRepository;
 use service::EntryService;
 use sqlx::mysql::MySqlPoolOptions;
-use utoipa::openapi::security::{Http, HttpAuthScheme, SecurityScheme};
+use utoipa::openapi::{
+    security::{Http, HttpAuthScheme, SecurityScheme},
+    OpenApi,
+};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_swagger_ui::SwaggerUi;
 
-fn app(service: EntryService<EntryRepository>, key_hash: [u8; 32]) -> Router {
+fn api_router() -> (Router<EntryService<EntryRepository>>, OpenApi) {
     let (router, mut api) = OpenApiRouter::new()
         .routes(routes!(handler::get_entry, handler::create_journal))
-        .route_layer(middleware::from_fn_with_state(
-            key_hash,
-            auth::require_api_key,
-        ))
-        .with_state(service)
         .split_for_parts();
     api.components
         .get_or_insert_with(Default::default)
@@ -26,11 +25,26 @@ fn app(service: EntryService<EntryRepository>, key_hash: [u8; 32]) -> Router {
             "bearerAuth",
             SecurityScheme::Http(Http::new(HttpAuthScheme::Bearer)),
         );
-    router.merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
+    (router, api)
+}
+
+fn app(service: EntryService<EntryRepository>, key_hash: [u8; 32]) -> Router {
+    let (router, api) = api_router();
+    router
+        .route_layer(middleware::from_fn_with_state(
+            key_hash,
+            auth::require_api_key,
+        ))
+        .with_state(service)
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if std::env::args().nth(1).as_deref() == Some("--print-openapi") {
+        println!("{}", api_router().1.to_pretty_json()?);
+        return Ok(());
+    }
     tracing_subscriber::fmt::init();
     let pool = MySqlPoolOptions::new()
         .max_connections(10)
@@ -50,7 +64,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repository::Entries;
+    use crate::domain::Entries;
     use testcontainers::{
         core::{IntoContainerPort, WaitFor},
         runners::AsyncRunner,
@@ -102,14 +116,14 @@ mod tests {
         );
 
         let service = EntryService::new(repository);
-        let sample = crate::repository::NewJournal {
+        let sample = crate::domain::NewJournal {
             entries: vec![
-                crate::repository::NewEntry {
+                crate::domain::NewEntry {
                     account_code: "1000".into(),
                     amount_cents: 100,
                     description: "Valid".into(),
                 },
-                crate::repository::NewEntry {
+                crate::domain::NewEntry {
                     account_code: "2000".into(),
                     amount_cents: -100,
                     description: "Valid".into(),
@@ -167,19 +181,19 @@ mod tests {
             2
         );
 
-        let three_entries = crate::repository::NewJournal {
+        let three_entries = crate::domain::NewJournal {
             entries: vec![
-                crate::repository::NewEntry {
+                crate::domain::NewEntry {
                     account_code: "1000".into(),
                     amount_cents: 50,
                     description: "Split".into(),
                 },
-                crate::repository::NewEntry {
+                crate::domain::NewEntry {
                     account_code: "2000".into(),
                     amount_cents: 50,
                     description: "Split".into(),
                 },
-                crate::repository::NewEntry {
+                crate::domain::NewEntry {
                     account_code: "3000".into(),
                     amount_cents: -100,
                     description: "Split".into(),

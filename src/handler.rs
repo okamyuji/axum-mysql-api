@@ -1,5 +1,5 @@
 use crate::{
-    repository::{CreatedJournal, Entries, Entry, NewJournal},
+    domain::{CreatedJournal, Entries, Entry, NewJournal},
     service::{CreateError, EntryService},
 };
 use axum::{
