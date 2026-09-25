@@ -1,5 +1,6 @@
 use std::process::Command;
 
+/// DBの無いCIでも仕様を出力できることを保証するため、環境変数を消して実バイナリを起動する。
 #[test]
 fn print_openapi_outputs_spec_without_database_or_api_key() {
     let output = Command::new(env!("CARGO_BIN_EXE_axum-mysql-api"))

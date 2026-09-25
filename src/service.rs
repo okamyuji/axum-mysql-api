@@ -18,6 +18,7 @@ impl<R: Entries> EntryService<R> {
         self.0.find_by_id(id).await
     }
 
+    /// 検証に失敗した仕訳はリポジトリに渡さず、`CreateError::Invalid` を返す。
     pub async fn create_journal(&self, journal: NewJournal) -> Result<CreatedJournal, CreateError> {
         if !journal.is_valid() {
             return Err(CreateError::Invalid);

@@ -24,6 +24,8 @@ pub struct NewJournal {
 }
 
 impl NewJournal {
+    /// 文字数は `chars()` で数え、MySQLの `VARCHAR(n)` と同じく文字単位で上限を判定する。
+    /// 合計は `i128` で計算するため、`i64` の金額を100行足しても桁あふれしない。
     pub fn is_valid(&self) -> bool {
         if !(2..=100).contains(&self.entries.len()) {
             return false;
@@ -50,11 +52,14 @@ pub struct CreatedJournal {
 }
 
 pub trait Entries: Clone + Send + Sync + 'static {
+    /// 該当する行が無い場合は `Err` ではなく `Ok(None)` を返す。
     fn find_by_id(
         &self,
         id: i64,
     ) -> impl Future<Output = Result<Option<Entry>, sqlx::Error>> + Send;
 
+    /// 検証は呼び出し側の責務で、ここでは行わない。全行を1トランザクションで保存し、
+    /// `entry_ids` は入力と同じ順に並ぶ。
     fn create_journal(
         &self,
         journal: NewJournal,
