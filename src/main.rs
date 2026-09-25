@@ -15,6 +15,8 @@ use utoipa::openapi::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_swagger_ui::SwaggerUi;
 
+/// 返す `Router` には認証が掛かっていない。サーバーに組み込むときは、
+/// 必ず `auth::require_api_key` を `route_layer` として掛けること。
 fn api_router() -> (Router<EntryService<EntryRepository>>, OpenApi) {
     let (router, mut api) = OpenApiRouter::new()
         .routes(routes!(handler::get_entry, handler::create_journal))
@@ -28,6 +30,7 @@ fn api_router() -> (Router<EntryService<EntryRepository>>, OpenApi) {
     (router, api)
 }
 
+/// 認証はAPIルートにだけ掛かり、Swagger UIとOpenAPI仕様は認証なしで公開される。
 fn app(service: EntryService<EntryRepository>, key_hash: [u8; 32]) -> Router {
     let (router, api) = api_router();
     router
@@ -39,6 +42,7 @@ fn app(service: EntryService<EntryRepository>, key_hash: [u8; 32]) -> Router {
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api))
 }
 
+/// 第1引数が `--print-openapi` のときは、`DATABASE_URL` と `API_KEY` を読む前、DBに接続する前に仕様を出力して終了する。
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if std::env::args().nth(1).as_deref() == Some("--print-openapi") {
