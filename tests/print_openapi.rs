@@ -15,7 +15,7 @@ fn print_openapi_outputs_spec_without_database_or_api_key() {
         String::from_utf8_lossy(&output.stderr)
     );
     let api: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert!(api["openapi"].as_str().unwrap().starts_with("3."));
+    assert_eq!(api["openapi"], "3.1.0");
     assert!(api["paths"]["/entries/{id}"]["get"].is_object());
     assert!(api["paths"]["/journals"]["post"].is_object());
     assert!(api["components"]["securitySchemes"]["bearerAuth"].is_object());
